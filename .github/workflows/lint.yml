@@ -20,7 +20,7 @@ jobs:
         run: |
           pip install flake8
           # stop the build if there are Python syntax errors or undefined names
-          flake8 walle tests --count --show-source --statistics
+          flake8 walle --count --show-source --statistics
       - name: Check formatting with black
         run: |
           pip install black

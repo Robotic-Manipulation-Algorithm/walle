@@ -3,6 +3,7 @@ import numpy as np
 
 from walle.pointcloud import PointCloud
 
+
 if __name__ == "__main__":
     print("Reading data...")
     cam_intr = np.loadtxt("camera_intrinsics.txt", delimiter=" ")
