@@ -1,78 +1,82 @@
 """Abstraction for RGB-D sensors.
 """
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 
 class Camera(ABC):
-  """An abstract class for interfacing with RGB-D sensors.
-  """
-  @abstractmethod
-  def __init__(self):
-    pass
-
-  def __enter__(self):
-    self.start()
-    return self
-
-  def __exit__(self, *args):
-    self.stop()
-
-  @abstractmethod
-  def start(self):
-    """Starts the sensor steams.
+    """An abstract class for interfacing with RGB-D sensors.
     """
-    pass
 
-  @abstractmethod
-  def stop(self):
-    """Stops the sensor streams.
-    """
-    pass
+    @abstractmethod
+    def __init__(self):
+        pass
 
-  def reset(self):
-    """Restarts the sensor streams.
-    """
-    self.stop()
-    self.start()
+    def __enter__(self):
+        self.start()
+        return self
 
-  @abstractmethod
-  def get_frame(self):
-    """Grabs a frame from every enabled stream.
-    """
-    pass
+    def __exit__(self, *args):
+        self.stop()
 
-  @abstractmethod
-  def get_burst(self, num_frames):
-    """Takes a series of consecutive frames.
+    @abstractmethod
+    def start(self):
+        """Starts the sensor steams.
+        """
+        pass
 
-    This is useful for applying temporal filters
-    on sequences of depth images. It returns the
-    last captured rgb frame and a temporally
-    filtered depth frame.
-    """
-    pass
+    @abstractmethod
+    def stop(self):
+        """Stops the sensor streams.
+        """
+        pass
 
-  @abstractmethod
-  def view_feed(self):
-    """Displays a live video feed.
-    """
-    pass
+    def reset(self):
+        """Restarts the sensor streams.
+        """
+        self.stop()
+        self.start()
 
-  @abstractproperty
-  def depth_scale(self):
-    """Returns the depth scale.
-    """
-    pass
+    @abstractmethod
+    def get_frame(self):
+        """Grabs a frame from every enabled stream.
+        """
+        pass
 
-  @abstractproperty
-  def intrinsics(self):
-    """Returns the intrinsics matrix.
-    """
-    pass
+    @abstractmethod
+    def get_burst(self, num_frames):
+        """Takes a series of consecutive frames.
 
-  @abstractproperty
-  def extrinsics(self):
-    """Returns the extrinsics matrix.
-    """
-    pass
+        This is useful for applying temporal filters
+        on sequences of depth images. It returns the
+        last captured rgb frame and a temporally
+        filtered depth frame.
+        """
+        pass
+
+    @abstractmethod
+    def view_feed(self):
+        """Displays a live video feed.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def depth_scale(self):
+        """Returns the depth scale.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def intrinsics(self):
+        """Returns the intrinsics matrix.
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def extrinsics(self):
+        """Returns the extrinsics matrix.
+        """
+        pass
