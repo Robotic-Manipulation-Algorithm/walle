@@ -3,33 +3,25 @@
 
 import numpy as np
 
-from walle.core import constants, utils
+from walle.core import utils
+from walle.constants import EPS
 
 
 class Quaternion:
     """A quaternion class for performing quaternion algebra.
-
-    Attributes:
-        scalar (:obj:`float`): The real component of the quaternion.
-        vector (:obj:`ndarray`): The complex component of the quaternion.
-        array (:obj:`ndarray`): An array containing the real component
-            followed by the complex component.
-        pybullet (:obj:`ndarray`): An array containing the complex component
-            followed by the real component.
     """
 
     def __init__(self, *args):
         """Initializes the quaternion in any of the following ways:
 
         Args:
+            empty: If no arguments are passed, a zero quaternion is initialized.
             s (:obj:`float`): The real component. Assumes complex component is zero.
             v (``array_like``): The complex component. Assumes real component is zero.
             q (``array_like``): An iterable of 4 floats defining the real and complex components.
                 You can also provide them separately as two function arguments ``s, v``.
             quat (:obj:`Quaternion`): An instance of this class. This is useful for copying
                 a quaternion or creating a ``UnitQuaternion`` object from an existing quaternion.
-
-        If no arguments are passed, a zero quaternion is initialized.
         """
         self._q = np.empty(4, dtype=np.float64)
         if len(args) == 0:
@@ -176,7 +168,7 @@ class Quaternion:
         """
         if isinstance(other, Quaternion):
             return self.__class__(
-                (self._q[0] * other._q[0]) - np.dot(self._q[1:], other._q[1:]),
+                (self._q[0] * other._q[0]) - self._q[1:] @ other._q[1:],
                 (self._q[0] * other._q[1:])
                 + (other._q[0] * self._q[1:])
                 + np.cross(self._q[1:], other._q[1:]),
@@ -185,12 +177,11 @@ class Quaternion:
             other = np.asarray(other, dtype=np.float64)
             if len(other) == 3:
                 return self.__class__(
-                    -np.dot(self._q[1:], other),
-                    (self._q[0] * other) + np.cross(self._q[1:], other),
+                    -self._q[1:] @ other, (self._q[0] * other) + np.cross(self._q[1:], other),
                 )
             elif len(other) == 4:
                 return self.__class__(
-                    (self._q[0] * other[0]) - np.dot(self._q[1:], other[1:]),
+                    (self._q[0] * other[0]) - self._q[1:] @ other[1:],
                     (self._q[0] * other[1:])
                     + (other[0] * self._q[1:])
                     + np.cross(self._q[1:], other[1:]),
@@ -205,33 +196,7 @@ class Quaternion:
     def __rmul__(self, other):
         """Quaternion multiplication.
         """
-        if isinstance(other, Quaternion):
-            return self.__class__(
-                (other._q[0] * self._q[0]) - np.dot(other._q[1:], self._q[1:]),
-                (other._q[1:] * self._q[0])
-                + (self._q[1:] * other._q[0])
-                + np.cross(other._q[1:], self._q[1:]),
-            )
-        elif utils.is_iterable(other):
-            other = np.asarray(other, dtype=np.float64)
-            if len(other) == 3:
-                return self.__class__(
-                    -np.dot(other, self._q[1:]),
-                    (other * self._q[0]) + np.cross(other, self._q[1:]),
-                )
-            elif len(other) == 4:
-                return self.__class__(
-                    (other[0] * self._q[0]) - np.dot(other[1:], self._q[1:]),
-                    (other[1:] * self._q[0])
-                    + (self._q[1:] * other[0])
-                    + np.cross(other[1:], self._q[1:]),
-                )
-            else:
-                raise ValueError("[!] Expecting length 3 or length 4 array_like.")
-        elif isinstance(other, (int, float)):  # scalar multiplication
-            return self.__class__(float(other) * self._q[0], float(other) * self._q[1:],)
-        else:
-            raise NotImplemented  # noqa F901
+        return self * other
 
     def __imul__(self, other):
         """Performs in-place multiplication.
@@ -280,7 +245,7 @@ class Quaternion:
         Returns:
             :obj:`float`
         """
-        return np.dot(self._q, self._q)
+        return self._q @ self._q
 
     def inv(self, inplace=False):
         """Returns the inverse of the quaternion.
@@ -289,11 +254,11 @@ class Quaternion:
             inplace (bool): If ``True``, performs the operation in-place.
         """
         norm_sq = self.norm_squared()
-        if norm_sq < constants.EPS:
+        if norm_sq < EPS:
             raise ZeroDivisionError("[!] Norm is very close to 0.")
         if inplace:
             self.conjugate(True)
-            self._q *= 1.0 / norm_sq
+            self._q /= norm_sq
         else:
             return (1.0 / norm_sq) * self.conjugate()
 
@@ -308,7 +273,7 @@ class Quaternion:
                 return
             return self.__class__(self._q)
         norm = self.norm()
-        if norm < constants.EPS:
+        if norm < EPS:
             raise ZeroDivisionError("[!] Norm is very close to 0.")
         if inplace:
             self._q /= norm
@@ -350,7 +315,7 @@ class Quaternion:
             :obj:`float`
         """
         if isinstance(other, Quaternion):
-            return np.dot(self._q, other._q)
+            return self._q @ self._q
         else:
             raise NotImplemented  # noqa F901
 
@@ -365,7 +330,7 @@ class Quaternion:
         """
         if isinstance(other, Quaternion):
             norm_a, norm_b = self.norm(), other.norm()
-            if any(n < constants.EPS for n in [norm_a, norm_b]):
+            if any(n < EPS for n in [norm_a, norm_b]):
                 raise ZeroDivisionError("[!] Norm is very close to 0.")
             return np.arccos(self.dot(other) / (norm_a * norm_b))
         else:
@@ -392,7 +357,7 @@ class Quaternion:
             ``Quaternion``
         """
         norm_v = np.linalg.norm(self._q[1:])
-        if norm_v < constants.EPS:
+        if norm_v < EPS:
             raise ZeroDivisionError("[!] Norm is very close to 0.")
         exp_s = np.exp(self._q[0])
         q_exp = np.hstack([np.cos(norm_v), (self._v / norm_v) * np.sin(norm_v)])
@@ -406,7 +371,7 @@ class Quaternion:
         """
         norm_q = self.norm()
         norm_v = np.linalg.norm(self._q[1:])
-        if any(n < constants.EPS for n in [norm_v, norm_q]):
+        if any(n < EPS for n in [norm_v, norm_q]):
             raise ZeroDivisionError("[!] Norm is very close to 0.")
         q_log = np.hstack([np.log(norm_q), (self._q[1:] / norm_v) * np.arccos(self._q[0] / norm_q)])
         return self.__class__(q_log)
@@ -419,7 +384,7 @@ class Quaternion:
         """
         norm_v = np.linalg.norm(self._q[1:])
         norm_q = self.norm()
-        if any(n < constants.EPS for n in [norm_v, norm_q]):
+        if any(n < EPS for n in [norm_v, norm_q]):
             raise ZeroDivisionError("[!] Norm is very close to 0.")
         n = self._q[1:] / norm_v
         theta = np.arccos(self._q[0] / norm_q)
@@ -555,11 +520,11 @@ class UnitQuaternion(Quaternion):
         """
         unit_i = np.array([1, 0, 0], dtype=np.float64)
         theta = 2 * np.arctan2(np.linalg.norm(self.vector), self.scalar)
-        if theta < constants.EPS:  # no unique axis -> default to null axis
+        if np.abs(theta) < EPS:  # no unique axis -> default to null axis
             self._u, self._theta = unit_i, 0.0
         else:
             u = self.vector / np.sin(theta / 2)
-            if not np.isclose(np.dot(u, u), 1.0):
+            if not np.isclose(u @ u, 1.0):
                 u /= np.linalg.norm(u)
             self._u, self._theta = u, theta
         self._rot_vec = self._theta * self._u

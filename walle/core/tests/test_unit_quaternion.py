@@ -6,7 +6,7 @@ import numpy as np
 from walle.core import Quaternion, UnitQuaternion
 
 
-class TestUnitQuaternion(object):
+class TestUnitQuaternion:
     def axis_angle_vector(self, deg):
         theta = np.deg2rad(deg)
         unit_vec = np.array([0, 0, 1])

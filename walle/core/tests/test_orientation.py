@@ -7,7 +7,7 @@ import pytest
 from walle.core import Orientation, UnitQuaternion
 
 
-class TestOrientation(object):
+class TestOrientation:
     def axis_angle_vector(self, deg):
         theta = np.deg2rad(deg)
         unit_vec = np.array([0, 0, 1])

@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from walle.core import constants, quaternion, utils
+from walle.core import quaternion, utils
 from walle.core.matrix import RotationMatrix
 from walle.core.orthogonal import is_proper_rotm
 
@@ -113,7 +113,7 @@ class Orientation:
         """This checks whether two orientations correspond to the same rotation.
         """
         if isinstance(other, Orientation):
-            if self._quat.dot(other._quat) > 1 - constants.EPS:
+            if np.isclose(self._quat.dot(other._quat), 1):
                 return True
             return False
         else:
@@ -125,7 +125,7 @@ class Orientation:
         """This checks whether two orientations correspond to the same orientation.
         """
         if isinstance(other, Orientation):
-            if abs(self._quat.dot(other._quat)) > 1 - constants.EPS:
+            if np.isclose(abs(self._quat.dot(other._quat)), 1):
                 return True
             return False
         else:
